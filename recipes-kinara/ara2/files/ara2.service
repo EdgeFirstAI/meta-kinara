@@ -1,0 +1,18 @@
+[Unit]
+Description=Kinara Ara2 Proxy Service
+After=network.target
+Wants=network.target
+
+[Service]
+Type=simple
+User=root
+ExecStartPre=/usr/libexec/ara2/uiodma.sh
+ExecStartPre=/usr/libexec/ara2/active_enable -e 0 -m 2
+ExecStartPre=/usr/libexec/ara2/program_pll -e 0 -p 0
+ExecStartPre=/usr/libexec/ara2/ddr_mem_united_config -e 0 -d 0 -s 0 -g 1 -u 1 -m 1 -l 3 -b willow -o /usr/share/ara2/ddr_cfg_31.bin
+ExecStartPre=/usr/bin/rm -f /var/run/dvproxy.pid
+ExecStart=/usr/libexec/ara2/proxy --config /etc/ara2.yaml
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
