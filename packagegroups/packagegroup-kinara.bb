@@ -12,4 +12,5 @@ inherit packagegroup
 RDEPENDS:${PN} = " \
     ara2 \
     ara2-python \
+    edgefirst-ara2 \
 "
