@@ -2,7 +2,7 @@
 
 All notable changes to the `meta-kinara` Yocto layer are documented here.
 
-## [Unreleased] — Changes since v1.1 (2026-03-02)
+## v1.2.0 — 2026-04-16
 
 - Added `edgefirst-ara2` recipe (v0.4.0) — Python bindings for the
   Kinara Ara-2 Runtime built from the EdgeFirst `ara2-rs` Rust crate.
