@@ -2,6 +2,13 @@
 
 All notable changes to the `meta-kinara` Yocto layer are documented here.
 
+## v1.2.3 — 2026-05-28
+
+- Bumped `edgefirst-ara2` from 0.5.0 to 0.11.2 — Python bindings updated
+  through six intermediate releases. Recipe pulls the
+  `cp311-abi3-manylinux_2_17_aarch64` wheel from the ara2-rs v0.11.2
+  release; LICENSE hash refreshed.
+
 ## v1.2.2 — 2026-04-26
 
 - Bumped `edgefirst-ara2` from 0.4.0 to 0.5.0 — updated Python bindings
