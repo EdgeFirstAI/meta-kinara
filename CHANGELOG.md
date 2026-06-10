@@ -2,6 +2,12 @@
 
 All notable changes to the `meta-kinara` Yocto layer are documented here.
 
+## [Unreleased]
+
+- `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the
+  NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain
+  supported.
+
 ## v1.2.3 — 2026-05-28
 
 - Bumped `edgefirst-ara2` from 0.5.0 to 0.11.2 — Python bindings updated
