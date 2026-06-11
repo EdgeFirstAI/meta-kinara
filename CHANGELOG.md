@@ -7,6 +7,12 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 - `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the
   NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain
   supported.
+- Bumped `kernel-module-uiodma` from 1.2.1 to 1.2.2 — sysfs
+  `bin_attribute` callbacks constified for Linux 6.13+ (kernel 6.18 in
+  the whinlatter BSP), version-gated so 5.15/6.12 kernels still build.
+- `ara2` and `kernel-module-uiodma` recipes adapted to whinlatter unpack
+  semantics (no raw `${WORKDIR}` in `S`; git checkouts at
+  `${UNPACKDIR}/${BP}`).
 
 ## v1.2.3 — 2026-05-28
 

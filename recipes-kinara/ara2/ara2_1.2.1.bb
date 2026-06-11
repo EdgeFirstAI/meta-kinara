@@ -28,7 +28,11 @@ python do_fetch:prepend() {
         )
 }
 
-S = "${WORKDIR}/ara2-runtime-r${PV}"
+# Dual-compat unpack base: whinlatter QA fatals on any raw ${WORKDIR} in S;
+# kirkstone/scarthgap have no UNPACKDIR. The inline expression resolves to
+# the actual unpack destination on every supported release.
+UNPACK_BASE = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}"
+S = "${UNPACK_BASE}/ara2-runtime-r${PV}"
 
 inherit features_check systemd python3-dir
 
@@ -37,15 +41,9 @@ do_install:append () {
     install -d ${D}${sysconfdir}
     install -d ${D}${libexecdir}/ara2
 
-    if [ "${UNPACKDIR}" != "" ]; then
-        install -m 0644 ${UNPACKDIR}/ara2.service ${D}${systemd_system_unitdir}
-        install -m 0644 ${UNPACKDIR}/ara2.yaml ${D}${sysconfdir}/ara2.yaml
-        install -m 0755 ${UNPACKDIR}/uiodma.sh ${D}${libexecdir}/ara2
-    else
-        install -m 0644 ${WORKDIR}/ara2.service ${D}${systemd_system_unitdir}
-        install -m 0644 ${WORKDIR}/ara2.yaml ${D}${sysconfdir}/ara2.yaml
-        install -m 0755 ${WORKDIR}/uiodma.sh ${D}${libexecdir}/ara2
-    fi
+    install -m 0644 ${UNPACK_BASE}/ara2.service ${D}${systemd_system_unitdir}
+    install -m 0644 ${UNPACK_BASE}/ara2.yaml ${D}${sysconfdir}/ara2.yaml
+    install -m 0755 ${UNPACK_BASE}/uiodma.sh ${D}${libexecdir}/ara2
 
     install -m 0755 ${S}/art/linux/${TARGET_ARCH}/proxy/proxy_${TARGET_ARCH} ${D}${libexecdir}/ara2/proxy
 
