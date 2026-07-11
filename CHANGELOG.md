@@ -4,6 +4,9 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 
 ## [Unreleased]
 
+- `LAYERSERIES_COMPAT` extended with `wrynose` (Yocto 5.4) for the NXP
+  imx-6.18.20-2.0.0 BSP. Kirkstone, scarthgap, walnascar, and
+  whinlatter remain supported.
 - `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the
   NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain
   supported.
