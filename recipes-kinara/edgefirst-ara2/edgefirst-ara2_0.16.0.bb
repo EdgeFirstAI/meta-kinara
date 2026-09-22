@@ -20,7 +20,7 @@ S = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}"
 inherit python3-dir
 
 DEPENDS = "python3 unzip-native"
-RDEPENDS:${PN} = "python3 ara2"
+RDEPENDS:${PN} = "python3 ara2-runtime"
 
 do_install() {
     install -d ${D}${PYTHON_SITEPACKAGES_DIR}

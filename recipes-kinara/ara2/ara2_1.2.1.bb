@@ -17,6 +17,18 @@ DEPENDS = "python3"
 RDEPENDS:${PN} = "kernel-module-uiodma"
 RDEPENDS:${PN}-python = "python3"
 
+# Consumers depend on the capability, not on this recipe, so a different
+# ARA-2 packaging can satisfy them without their being edited.
+RPROVIDES:${PN} += "ara2-runtime"
+
+# NXP's imx-nxp-ara2 supplies the same capability and cannot be installed
+# alongside this one: it is a different DVAPI generation on a different
+# proxy socket, and a client of one hangs on the other's proxy. No files
+# collide, so nothing but this declaration prevents co-installation.
+# imx-nxp-ara2 declares the mirror of this through the bbappend in
+# dynamic-layers/imx-machine-learning.
+RCONFLICTS:${PN} = "imx-nxp-ara2"
+
 python do_fetch:prepend() {
     mirror = d.getVar('KINARA_MIRROR')
     if not mirror or 'KINARA_MIRROR_NOT_SET' in mirror:

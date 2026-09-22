@@ -4,6 +4,21 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 
 ## [Unreleased]
 
+- `KINARA_ARA2_PROVIDER` selects which Ara-2 runtime an image installs:
+  `nxp` (default) for NXP's `imx-nxp-ara2`, or `kinara` for this layer's
+  `ara2`. The two ship different DVAPI generations on different proxy
+  sockets and a client of one hangs on the other's proxy, so they now
+  declare `RCONFLICTS` on each other. No files collide between them, so
+  nothing else prevented co-installation.
+- `ara2` and `imx-nxp-ara2` both `RPROVIDES` a virtual `ara2-runtime`, and
+  `edgefirst-ara2` depends on that rather than on `ara2`. The bindings work
+  against either generation, and a future packaging can satisfy them by
+  providing the same name.
+- Appends to NXP recipes moved under
+  `dynamic-layers/imx-machine-learning/`, wired through `BBFILES_DYNAMIC`.
+  A `.bbappend` with no matching recipe is a parse error, so keeping them
+  in `recipes-*` would break every build without meta-imx-ml. Builds
+  without that layer fall back to `KINARA_ARA2_PROVIDER = "kinara"`.
 - `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the
   NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain
   supported.

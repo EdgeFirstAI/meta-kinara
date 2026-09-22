@@ -9,6 +9,41 @@ support for NXP i.MX platforms.
 |---|---|---|
 | `kernel-module-uiodma` | UIO DMA kernel module | GPL-2.0-only |
 | `ara2` | Ara-2 runtime (proxy, libraries, firmware) | Proprietary |
+| `edgefirst-ara2` | Python bindings from the ara2-rs crate | Apache-2.0 |
+
+## Choosing an Ara-2 runtime
+
+Two packagings of the Ara-2 runtime exist, and they cannot be installed
+together:
+
+| `KINARA_ARA2_PROVIDER` | Package | DVAPI | Proxy socket | Service |
+|---|---|---|---|---|
+| `nxp` (default) | `imx-nxp-ara2`, from meta-imx-ml | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
+| `kinara` | `ara2`, from this layer | 1.1.x | `/var/run/ara2.sock` | `ara2.service` |
+
+They ship different DVAPI generations, configure different sockets, and a
+client built against one connects to the other's proxy and then hangs on
+the first call, so the packages declare `RCONFLICTS` on each other. Select
+one in `local.conf`:
+
+```
+KINARA_ARA2_PROVIDER = "kinara"
+```
+
+With `nxp`, `packagegroup-kinara` installs only `edgefirst-ara2`, and the
+runtime arrives through NXP's `packagegroup-imx-ml`. With `kinara`, this
+layer's `ara2` is installed and `imx-nxp-ara2` is dropped from that
+packagegroup.
+
+`edgefirst-ara2` works against either generation — it probes the loaded
+library — so it depends on the virtual `ara2-runtime` that both packagings
+provide rather than on a specific one.
+
+Builds without meta-imx-ml (Torizon, for example) have no NXP packaging to
+select; there `nxp` falls back to `kinara` with a note, so no
+configuration is needed. Appends to NXP recipes live under
+`dynamic-layers/imx-machine-learning/` and are parsed only when that layer
+is present.
 
 ## Dependencies
 
