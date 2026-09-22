@@ -1,0 +1,60 @@
+From: Sébastien Taylor <sebastien@au-zone.com>
+Date: Mon, 21 Sep 2026 00:00:00 -0600
+Subject: [PATCH] hw_bringup: verify uiodma PCI bind, not just module
+ residency
+
+handle_uiodma_arm() only checks whether the uiodma kernel module is
+resident (lsmod) before deciding whether to bind it to the Ara-2 PCIe
+device via the "new_id" sysfs write. That write only happens the first
+time the module is modprobed in a given boot.
+
+rt-sdk-ara2.service runs this script with Restart=always. If an early
+attempt binds the device then loses the binding (e.g. an aborted DDR
+bringup tears down PCI device state), uiodma stays loaded but unbound.
+Every subsequent restart within that boot sees "module already
+loaded", skips the bind step entirely, and kinara_main immediately
+fails with "uiodma file path doesnt exist" -- the crash loop can never
+self-heal until the next power cycle reloads the module fresh.
+
+Verify the actual driver binding for the Ara-2 PCI device on every
+run, independent of module residency, and (re)establish it if needed.
+
+Upstream-Status: Pending [reported to NXP]
+Signed-off-by: Sébastien Taylor <sebastien@au-zone.com>
+---
+ usr/share/rt-sdk-ara240_2.1.1/scripts/hw_bringup.sh | 22 +++++++++++++++++++-
+ 1 file changed, 21 insertions(+), 1 deletion(-)
+
+--- a/usr/share/rt-sdk-ara240_2.1.1/scripts/hw_bringup.sh
++++ b/usr/share/rt-sdk-ara240_2.1.1/scripts/hw_bringup.sh
+@@ -70,9 +70,29 @@
+         log_message "$GREEN" "UIODMA already loaded."
+     else
+         modprobe uiodma
+-        echo "1e58 0002" > /sys/bus/pci/drivers/uiodma/new_id
+         log_message "$GREEN" "UIODMA module inserted."
+     fi
++
++    # EDGEFIRST: module residency alone does not mean the PCI device is
++    # bound to uiodma. Restart=always reruns this whole script within the
++    # same boot without unloading uiodma; if an earlier attempt bound the
++    # device then lost it (e.g. an aborted DDR bringup), the check above
++    # skips rebinding and every later retry fails immediately with
++    # "uiodma file path doesnt exist" for the rest of that boot. Verify
++    # the actual bind and (re)establish it regardless of module state.
++    for pci_dev in /sys/bus/pci/devices/*; do
++        [ -f "$pci_dev/vendor" ] || continue
++        grep -q "0x1e58" "$pci_dev/vendor" 2>/dev/null || continue
++        dev_id=$(basename "$pci_dev")
++        if [ "$(basename "$(readlink -f "$pci_dev/driver" 2>/dev/null)" 2>/dev/null)" = "uiodma" ]; then
++            log_message "$GREEN" "PCI device $dev_id already bound to uiodma."
++        else
++            log_message "$YELLOW" "PCI device $dev_id not bound to uiodma, rebinding..."
++            echo "$dev_id" > /sys/bus/pci/drivers/uiodma/bind 2>/dev/null \
++                || echo "1e58 0002" > /sys/bus/pci/drivers/uiodma/new_id 2>/dev/null \
++                || true
++        fi
++    done
+ }
+ 
+ #############################################
