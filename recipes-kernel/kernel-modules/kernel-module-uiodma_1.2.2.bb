@@ -24,5 +24,5 @@ RPROVIDES:${PN} += "kernel-module-uiodma"
 # do_packagedata collision, so provide the name it expects too.
 RPROVIDES:${PN} += "uiodma"
 
-# Load uiodma at boot so Ara-2 NPU is ready without waiting for ara2.service
+# Load uiodma at boot so the Ara-2 NPU is ready before the runtime service starts
 KERNEL_MODULE_AUTOLOAD += "uiodma"

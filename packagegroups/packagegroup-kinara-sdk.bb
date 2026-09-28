@@ -10,6 +10,6 @@ PACKAGE_ARCH = "${MACHINE_ARCH}"
 inherit packagegroup
 
 RDEPENDS:${PN} = " \
-    ara2-dev \
-    ara2-staticdev \
+    imx-nxp-ara2-dev \
+    imx-nxp-ara2-staticdev \
 "

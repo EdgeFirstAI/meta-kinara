@@ -8,42 +8,75 @@ support for NXP i.MX platforms.
 | Recipe | Description | License |
 |---|---|---|
 | `kernel-module-uiodma` | UIO DMA kernel module | GPL-2.0-only |
-| `ara2` | Ara-2 runtime (proxy, libraries, firmware) | Proprietary |
-| `edgefirst-ara2` | Python bindings from the ara2-rs crate | Apache-2.0 |
+| `imx-nxp-ara2` (1.2.1) | Kinara SDK Ara-2 runtime (proxy, libraries, firmware) | Proprietary |
+| `packagegroup-kinara` | The runtime, plus `edgefirst-ara2` when meta-edgefirst is in the build | Proprietary |
 
 ## Choosing an Ara-2 runtime
 
-Two packagings of the Ara-2 runtime exist, and they cannot be installed
-together:
+Two packagings of the Ara-2 runtime exist, and only one can be installed:
 
-| `KINARA_ARA2_PROVIDER` | Package | DVAPI | Proxy socket | Service |
+| Source | Recipe | DVAPI | Proxy socket | Service |
 |---|---|---|---|---|
-| `nxp` (default) | `imx-nxp-ara2`, from meta-imx-ml | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
-| `kinara` | `ara2`, from this layer | 1.1.x | `/var/run/ara2.sock` | `ara2.service` |
+| NXP, meta-imx-ml | `imx-nxp-ara2_2.1.1.bb` | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
+| Kinara SDK, this layer | `imx-nxp-ara2_1.2.1.bb` | 1.1.x | `/var/run/ara2.sock` | `ara2.service` |
 
-They ship different DVAPI generations, configure different sockets, and a
-client built against one connects to the other's proxy and then hangs on
-the first call, so the packages declare `RCONFLICTS` on each other. Select
-one in `local.conf`:
+This layer packages the Kinara SDK under NXP's recipe name, with the
+version tracking the Kinara SDK release. A build selects exactly one
+version of a recipe, so the two can never be installed together, and every
+consumer — NXP's `packagegroup-imx-ml`, `packagegroup-kinara`, and
+meta-edgefirst's `edgefirst-ara2` — depends on `imx-nxp-ara2` without
+caring which one it gets.
+
+NXP's packaging takes precedence wherever meta-imx-ml ships it (the wrynose 6.18.20-2.0.0 BSP onwards). BitBake compares versions only within the highest-priority layer, and this layer outranks meta-imx-ml, so the Kinara SDK recipe skips itself there rather than relying on the version ordering. To use it anyway, set in `local.conf`:
 
 ```
-KINARA_ARA2_PROVIDER = "kinara"
+PREFERRED_VERSION_imx-nxp-ara2 = "1.2.1"
 ```
 
-With `nxp`, `packagegroup-kinara` installs only `edgefirst-ara2`, and the
-runtime arrives through NXP's `packagegroup-imx-ml`. With `kinara`, this
-layer's `ara2` is installed and `imx-nxp-ara2` is dropped from that
-packagegroup.
+Builds without meta-imx-ml (Torizon, for example), or with a meta-imx-ml older than the wrynose BSP, have only the Kinara SDK recipe and need no configuration. Appends to NXP recipes live under `dynamic-layers/imx-machine-learning/` and are parsed only when that layer ships the recipes they extend.
 
-`edgefirst-ara2` works against either generation — it probes the loaded
-library — so it depends on the virtual `ara2-runtime` that both packagings
-provide rather than on a specific one.
+The layer sets `KINARA_ARA2_RUNTIME` to `nxp` or `kinara` to say which packaging `imx-nxp-ara2` resolves to. It is read-only: recipes that work with only one runtime test it rather than repeating the selection logic. meta-edgefirst's NNStreamer Ara-2 sub-plugin (`nnstreamer-ara2`), for example, is built only when it is `kinara`.
 
-Builds without meta-imx-ml (Torizon, for example) have no NXP packaging to
-select; there `nxp` falls back to `kinara` with a note, so no
-configuration is needed. Appends to NXP recipes live under
-`dynamic-layers/imx-machine-learning/` and are parsed only when that layer
-is present.
+The Kinara SDK recipe replaces the `ara2` and `ara2-python` packages of
+earlier releases, so package-managed targets upgrade in place. It does not
+ship the SDK's DVAPI Python module; `edgefirst-ara2` (from
+[meta-edgefirst](https://github.com/EdgeFirstAI/meta-edgefirst)) is the
+Python API for either runtime.
+
+NXP's demo recipes in meta-nxp-demo-experience (`imx-ara2-vision-examples`,
+the LLM and VLM edge studios, `imx-smart-device-gateway`) are written
+against NXP's packaging and are not expected to work with the Kinara SDK
+one.
+
+## Running the Kinara SDK runtime
+
+`ara2.service` is installed disabled. Enable it once on the target so the proxy starts at boot:
+
+```
+systemctl enable --now ara2
+```
+
+Never run `ara2-info` or `chip_info` while the service is active; stop it first.
+
+### Ara-2 card boot firmware
+
+The Ara-2 card keeps its boot firmware in on-card flash, and each runtime accepts only certain versions (`dm_supported_firmware_versions` in the proxy configuration):
+
+| Runtime | Accepted firmware versions | Shipped image |
+|---|---|---|
+| Kinara SDK 1.2.1 (this layer) | 8719, 8720, 8723, 32778, 32779 | `/usr/share/ara2/willow_therm.hex` (32779) |
+| NXP rt-sdk-ara2 2.1.1 | 32779, 65794, 131072, 131073 | `Commercial_131072.hex`, via `program_flash.sh` |
+
+A card that has been used with NXP's runtime may carry firmware 65794 or newer. The Kinara SDK proxy then fails with `Unsupported firmware version on device ... DV_ENDPOINT_FIRMWARE_BOOT_FAILURE`. To check and restore the firmware this layer ships:
+
+```
+systemctl stop ara2
+/usr/libexec/ara2/chip_info -e 0        # firmware_version(raw) should read 32779
+/usr/libexec/ara2/program_flash -e 0 -f /usr/share/ara2/willow_therm.hex --version_check 0
+reboot
+```
+
+`program_flash` refuses to write an older version than the card holds unless `--version_check 0` is given.
 
 ## Dependencies
 
@@ -64,7 +97,7 @@ bitbake-layers add-layer sources/meta-kinara
 
 ### Ara-2 Runtime (NDA required)
 
-The `ara2` recipe fetches the proprietary Kinara runtime tarball from a
+The Kinara SDK `imx-nxp-ara2` recipe fetches the proprietary Kinara runtime tarball from a
 download mirror. Since the runtime is distributed under NDA, you must
 configure the mirror URL in your `local.conf`:
 
@@ -72,7 +105,7 @@ configure the mirror URL in your `local.conf`:
 KINARA_MIRROR = "https://<mirror-url-provided-by-kinara>"
 ```
 
-Without this variable set, `bitbake ara2` will produce a clear error
+Without this variable set, fetching the Kinara SDK recipe produces a clear error
 message with instructions.
 
 Contact [Kinara](https://www.kinara.ai/) for NDA access to the runtime SDK.
@@ -80,7 +113,7 @@ Contact [Kinara](https://www.kinara.ai/) for NDA access to the runtime SDK.
 ### Preparing the Runtime Tarball
 
 Kinara distributes a full SDK (`ara2-sdk-r<version>.tar.gz`, ~6.4 GB) that
-includes a large Docker image for the host-side model converter. The `ara2`
+includes a large Docker image for the host-side model converter. The
 recipe only needs the runtime components (~56 MB). To create the runtime
 tarball from the SDK:
 
@@ -116,7 +149,7 @@ If you need to update the checksum in the recipe (e.g. for a new SDK version):
 sha256sum ara2-runtime-r${VERSION}.tar.bz2
 ```
 
-Then update `SRC_URI[sha256sum]` in `recipes-kinara/ara2/ara2_<version>.bb`.
+Then update `SRC_URI[sha256sum]` in `recipes-kinara/imx-nxp-ara2/imx-nxp-ara2_<version>.bb`.
 
 ### Kernel Module (no special config needed)
 

@@ -4,33 +4,19 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 
 ## [Unreleased]
 
-- `KINARA_ARA2_PROVIDER` selects which Ara-2 runtime an image installs:
-  `nxp` (default) for NXP's `imx-nxp-ara2`, or `kinara` for this layer's
-  `ara2`. The two ship different DVAPI generations on different proxy
-  sockets and a client of one hangs on the other's proxy, so they now
-  declare `RCONFLICTS` on each other. No files collide between them, so
-  nothing else prevented co-installation.
-- `ara2` and `imx-nxp-ara2` both `RPROVIDES` a virtual `ara2-runtime`, and
-  `edgefirst-ara2` depends on that rather than on `ara2`. The bindings work
-  against either generation, and a future packaging can satisfy them by
-  providing the same name.
-- Appends to NXP recipes moved under
-  `dynamic-layers/imx-machine-learning/`, wired through `BBFILES_DYNAMIC`.
-  A `.bbappend` with no matching recipe is a parse error, so keeping them
-  in `recipes-*` would break every build without meta-imx-ml. Builds
-  without that layer fall back to `KINARA_ARA2_PROVIDER = "kinara"`.
-- `LAYERSERIES_COMPAT` extended with `wrynose` (Yocto 5.4) for the NXP
-  imx-6.18.20-2.0.0 BSP. Kirkstone, scarthgap, walnascar, and
-  whinlatter remain supported.
-- `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the
-  NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain
-  supported.
-- Bumped `kernel-module-uiodma` from 1.2.1 to 1.2.2 — sysfs
-  `bin_attribute` callbacks constified for Linux 6.13+ (kernel 6.18 in
-  the whinlatter BSP), version-gated so 5.15/6.12 kernels still build.
-- `ara2` and `kernel-module-uiodma` recipes adapted to whinlatter unpack
-  semantics (no raw `${WORKDIR}` in `S`; git checkouts at
-  `${UNPACKDIR}/${BP}`).
+- The Kinara SDK runtime recipe is renamed from `ara2` to `imx-nxp-ara2` at version 1.2.1, the Kinara SDK release, so it and NXP's `imx-nxp-ara2` (2.1.1, meta-imx-ml) are one recipe name and a build installs exactly one of them. Previously both were installed side by side, with different DVAPI generations on different proxy sockets.
+- NXP's `imx-nxp-ara2` takes precedence wherever meta-imx-ml ships it (wrynose onwards); the Kinara SDK recipe is used there only with `PREFERRED_VERSION_imx-nxp-ara2 = "1.2.1"`. Builds without meta-imx-ml, or with an earlier meta-imx-ml, use it with no configuration.
+- `imx-nxp-ara2` (Kinara SDK) replaces and conflicts with the old `ara2` and `ara2-python` packages so package-managed targets upgrade in place.
+- `KINARA_ARA2_RUNTIME` (read-only, set in `layer.conf`) reports which packaging `imx-nxp-ara2` resolves to, `nxp` or `kinara`, for recipes that work with only one of them.
+- The DVAPI Python module (`kinara/dvapi.py`) is no longer packaged; `edgefirst-ara2` is the Python API for both runtime packagings.
+- `edgefirst-ara2` moved to meta-edgefirst. `packagegroup-kinara` installs it only when meta-edgefirst is in the build.
+- `packagegroup-kinara` and `packagegroup-kinara-sdk` depend on `imx-nxp-ara2` and its `-dev`/`-staticdev` packages.
+- Appends to NXP recipes (`imx-nxp-ara2`, `uiodma`) live under `dynamic-layers/imx-machine-learning/`, wired through `BBFILES_DYNAMIC`. A `.bbappend` with no matching recipe is a parse error, so keeping them in `recipes-*` broke every build without meta-imx-ml. They are also masked on kirkstone through whinlatter, whose meta-imx-ml has neither recipe.
+- NXP's `rt-sdk-ara2` `hw_bringup.sh` is patched to check the actual PCI driver binding of the Ara-2 device before skipping the uiodma bind.
+- `LAYERSERIES_COMPAT` extended with `wrynose` (Yocto 5.4) for the NXP imx-6.18.20-2.0.0 BSP. Kirkstone, scarthgap, walnascar, and whinlatter remain supported.
+- `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain supported.
+- Bumped `kernel-module-uiodma` from 1.2.1 to 1.2.2 — sysfs `bin_attribute` callbacks constified for Linux 6.13+ (kernel 6.18 in the whinlatter BSP), version-gated so 5.15/6.12 kernels still build.
+- `ara2` and `kernel-module-uiodma` recipes adapted to whinlatter unpack semantics (no raw `${WORKDIR}` in `S`; git checkouts at `${UNPACKDIR}/${BP}`).
 
 ## v1.2.3 — 2026-05-28
 

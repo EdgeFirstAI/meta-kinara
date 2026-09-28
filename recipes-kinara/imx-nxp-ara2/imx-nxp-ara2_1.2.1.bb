@@ -11,23 +11,38 @@ SRC_URI = "\
 "
 SRC_URI[sha256sum] = "1fbe03b4db1c099456f2e3d2808866f4bd8a673da650c82e982f6ee785e8fc4a"
 
-PACKAGES = "${PN}-python ${PN}-dev ${PN}-staticdev ${PN}-dbg ${PN}"
+PACKAGES = "${PN}-dev ${PN}-staticdev ${PN}-dbg ${PN}"
 
-DEPENDS = "python3"
 RDEPENDS:${PN} = "kernel-module-uiodma"
-RDEPENDS:${PN}-python = "python3"
 
-# Consumers depend on the capability, not on this recipe, so a different
-# ARA-2 packaging can satisfy them without their being edited.
-RPROVIDES:${PN} += "ara2-runtime"
+# This recipe packages the Kinara SDK under the same name as NXP's
+# imx-nxp-ara2 (meta-imx-ml), with PV tracking the Kinara SDK release.
+# Sharing the name makes the two mutually exclusive by construction: only
+# one version of a recipe is built, so a build installs one runtime or the
+# other, never both.
+#
+# NXP's packaging takes precedence wherever meta-imx-ml ships it (wrynose
+# onwards, see KINARA_ARA2_RUNTIME in layer.conf). Layer priority rules
+# out relying on the version ordering alone -- BitBake compares versions
+# only within the highest-priority layer, and this layer outranks
+# meta-imx-ml -- so this recipe steps aside there unless it is selected
+# explicitly:
+#
+#   PREFERRED_VERSION_imx-nxp-ara2 = "1.2.1"
+python () {
+    if d.getVar('KINARA_ARA2_RUNTIME') == 'nxp':
+        raise bb.parse.SkipRecipe(
+            "NXP's imx-nxp-ara2 from meta-imx-ml takes precedence; set "
+            "PREFERRED_VERSION_imx-nxp-ara2 = \"%s\" to use the Kinara SDK "
+            "packaging" % d.getVar('PV'))
+}
 
-# NXP's imx-nxp-ara2 supplies the same capability and cannot be installed
-# alongside this one: it is a different DVAPI generation on a different
-# proxy socket, and a client of one hangs on the other's proxy. No files
-# collide, so nothing but this declaration prevents co-installation.
-# imx-nxp-ara2 declares the mirror of this through the bbappend in
-# dynamic-layers/imx-machine-learning.
-RCONFLICTS:${PN} = "imx-nxp-ara2"
+# Earlier releases packaged this recipe as ara2 and ara2-python; replace
+# them so package-managed targets upgrade in place. The DVAPI Python module
+# is not shipped: edgefirst-ara2 provides the Python API for either
+# packaging.
+RREPLACES:${PN} = "ara2 ara2-python"
+RCONFLICTS:${PN} = "ara2 ara2-python"
 
 python do_fetch:prepend() {
     mirror = d.getVar('KINARA_MIRROR')
@@ -46,7 +61,7 @@ python do_fetch:prepend() {
 UNPACK_BASE = "${@d.getVar('UNPACKDIR') or d.getVar('WORKDIR')}"
 S = "${UNPACK_BASE}/ara2-runtime-r${PV}"
 
-inherit features_check systemd python3-dir
+inherit features_check systemd
 
 do_install:append () {
     install -d ${D}${systemd_system_unitdir}
@@ -81,9 +96,6 @@ do_install:append () {
     install -d ${D}${includedir}
     install -m 0644 ${S}/art/linux/${TARGET_ARCH}/include/dv_status_codes.h ${D}${includedir}
     install -m 0644 ${S}/art/linux/${TARGET_ARCH}/include/dvapi.h ${D}${includedir}
-
-    install -d ${D}/${PYTHON_SITEPACKAGES_DIR}/kinara
-    install -m 0644 ${S}/art/linux/${TARGET_ARCH}/include/dvapi.py ${D}/${PYTHON_SITEPACKAGES_DIR}/kinara
 }
 
 REQUIRED_DISTRO_FEATURES = "systemd"
@@ -92,7 +104,6 @@ SYSTEMD_AUTO_ENABLE = "disable"
 
 INSANE_SKIP:${PN} += "already-stripped"
 
-FILES:${PN}-python += "${PYTHON_SITEPACKAGES_DIR}"
 FILES:${PN}-dbg += "${libdir}/.debug"
 FILES:${PN}-dev += "${includedir}"
 FILES:${PN}-dev += "${libdir}/*.so"
