@@ -9,8 +9,14 @@
 # imx95-frdm on wrynose-6.18.20. Patch it to verify the actual PCI
 # driver binding on every run instead of trusting module residency.
 #
+# NXP's 3.0 runtime replaced hw_bringup.sh with ara2-uiodma-bind.service, which
+# binds the device on every start, so the patch applies to 2.1.1 only.
+#
 # Local workaround pending upstream report to NXP.
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
-SRC_URI:append = " file://0001-hw_bringup-fix-uiodma-rebind-after-failed-attempt.patch"
+python () {
+    if d.getVar("PV") == "2.1.1":
+        d.appendVar("SRC_URI", " file://0001-hw_bringup-fix-uiodma-rebind-after-failed-attempt.patch")
+}
