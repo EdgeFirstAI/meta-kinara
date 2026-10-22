@@ -26,7 +26,7 @@ proxy:
   # interface_named_pipe: ["\\\\.\\pipe\\proxy_pipe"]
 
   # DEVICE MANAGEMENT CONFIG FIELDS
-  dm_firmware_path: /usr/share/ara2
+  dm_firmware_path: /usr/share/rt-sdk-ara240_2.1.1/proxy/mcp0
   device_interface: "all" # 1.possible values are usb/pcie/all  2.default is "usb"  3. if "all" is given, usb device will get priority
   #This flag can be set to true to set the device to a high power state when proxy is started.By default this option is turned off. This is a linux specific flag
   on_boot_auto_device_active_power: false
@@ -43,7 +43,7 @@ proxy:
 
   dram:
     boardname: "willow"
-    cfg_bin: /usr/share/ara2/ddr_cfg_31.bin # path to ddr configuration bin
+    cfg_bin: /usr/share/rt-sdk-ara240_2.1.1/hw_utils/ddr_config/ddr_cfg_31.bin # path to ddr configuration bin
     training_enable: false # enable ddr training or not
     lpddr4x: 0
     lpddrpad4x: 0
