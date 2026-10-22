@@ -1,5 +1,10 @@
 # meta-kinara
 
+>[!NOTE]
+> **About this fork:** This fork replaces the original Kinara SDK mirror workflow with NXP’s packaged ARA240 runtime, using recipes adapted from upstream meta-imx. The runtime is downloaded directly from NXP’s Yocto server; KINARA_MIRROR and manual SDK repackaging are no longer required. Builds just require acceptance of NXP’s EULA through ACCEPT_FSL_EULA = "1" in the conf/local.conf, and the runtime remains subject to the applicable proprietary license terms. The original mirror and tarball preparation instructions below are retained for historical reference and do not apply to this fork’s current runtime recipe.
+>
+>-tloanPhytec
+
 Yocto BSP layer providing [Kinara](https://www.kinara.ai/) Ara-2 NPU accelerator
 support for NXP i.MX platforms.
 
