@@ -23,18 +23,19 @@ RDEPENDS:${PN} = "kernel-module-uiodma"
 # one version of a recipe is built, so a build installs one runtime or the
 # other, never both.
 #
-# NXP's packaging takes precedence wherever meta-imx-ml ships it (wrynose
-# onwards, see KINARA_ARA2_RUNTIME in layer.conf). Layer priority rules
-# out relying on the version ordering alone -- BitBake compares versions
-# only within the highest-priority layer, and this layer outranks
-# meta-imx-ml -- so this recipe steps aside there unless it is selected
-# explicitly:
+# NXP's packaging takes precedence wherever it is available: from
+# meta-imx-ml (wrynose onwards), or from recipes-nxp-backport when it is
+# selected explicitly on an earlier release. See KINARA_ARA2_RUNTIME in
+# layer.conf. Layer priority rules out relying on the version ordering
+# alone -- BitBake compares versions only within the highest-priority
+# layer, and this layer outranks meta-imx-ml -- so this recipe steps aside
+# there unless it is selected explicitly:
 #
 #   PREFERRED_VERSION_imx-nxp-ara2 = "1.2.1"
 python () {
     if d.getVar('KINARA_ARA2_RUNTIME') == 'nxp':
         raise bb.parse.SkipRecipe(
-            "NXP's imx-nxp-ara2 from meta-imx-ml takes precedence; set "
+            "NXP's imx-nxp-ara2 packaging takes precedence; set "
             "PREFERRED_VERSION_imx-nxp-ara2 = \"%s\" to use the Kinara SDK "
             "packaging" % d.getVar('PV'))
 }
