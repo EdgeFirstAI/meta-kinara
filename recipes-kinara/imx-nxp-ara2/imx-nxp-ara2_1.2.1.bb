@@ -8,6 +8,8 @@ SRC_URI = "\
     file://ara2.service \
     file://ara2.yaml \
     file://uiodma.sh \
+    file://ara2-present.sh \
+    file://99-ara2-kinara.rules \
 "
 SRC_URI[sha256sum] = "1fbe03b4db1c099456f2e3d2808866f4bd8a673da650c82e982f6ee785e8fc4a"
 
@@ -71,6 +73,15 @@ do_install:append () {
     install -m 0644 ${UNPACK_BASE}/ara2.service ${D}${systemd_system_unitdir}
     install -m 0644 ${UNPACK_BASE}/ara2.yaml ${D}${sysconfdir}/ara2.yaml
     install -m 0755 ${UNPACK_BASE}/uiodma.sh ${D}${libexecdir}/ara2
+    install -m 0755 ${UNPACK_BASE}/ara2-present.sh ${D}${libexecdir}/ara2
+
+    # The unit is installed but not enabled, so udev is the activation path:
+    # the runtime starts when an accelerator appears and stays stopped when
+    # none is fitted. ara2.service also carries ara2-present.sh as its
+    # ExecCondition, which keeps Restart=always from looping if the unit is
+    # ever enabled by hand on a board with no accelerator.
+    install -d ${D}${nonarch_base_libdir}/udev/rules.d
+    install -m 0644 ${UNPACK_BASE}/99-ara2-kinara.rules ${D}${nonarch_base_libdir}/udev/rules.d
 
     install -m 0755 ${S}/art/linux/${TARGET_ARCH}/proxy/proxy_${TARGET_ARCH} ${D}${libexecdir}/ara2/proxy
 
@@ -114,3 +125,4 @@ FILES:${PN} += "${systemd_system_unitdir}"
 FILES:${PN} += "${datadir}"
 FILES:${PN} += "${bindir}"
 FILES:${PN} += "${libexecdir}"
+FILES:${PN} += "${nonarch_base_libdir}/udev/rules.d"

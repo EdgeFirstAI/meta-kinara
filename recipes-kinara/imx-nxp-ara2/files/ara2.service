@@ -6,6 +6,7 @@ Wants=network.target
 [Service]
 Type=simple
 User=root
+ExecCondition=/usr/libexec/ara2/ara2-present.sh
 ExecStartPre=/usr/libexec/ara2/uiodma.sh
 ExecStartPre=/usr/libexec/ara2/active_enable -e 0 -m 2
 ExecStartPre=/usr/libexec/ara2/program_pll -e 0 -p 0

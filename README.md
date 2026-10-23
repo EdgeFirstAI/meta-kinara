@@ -9,6 +9,7 @@ support for NXP i.MX platforms.
 |---|---|---|
 | `kernel-module-uiodma` | UIO DMA kernel module | GPL-2.0-only |
 | `imx-nxp-ara2` (1.2.1) | Kinara SDK Ara-2 runtime (proxy, libraries, firmware) | Proprietary |
+| `imx-nxp-ara2` (2.1.1), `eiq-aaf-connector` | NXP's runtime, backported from meta-imx-ml for releases that ship no Ara-2 recipe | Proprietary |
 | `packagegroup-kinara` | The runtime, plus `edgefirst-ara2` when meta-edgefirst is in the build | Proprietary |
 
 ## Choosing an Ara-2 runtime
@@ -18,6 +19,7 @@ Two packagings of the Ara-2 runtime exist, and only one can be installed:
 | Source | Recipe | DVAPI | Proxy socket | Service |
 |---|---|---|---|---|
 | NXP, meta-imx-ml | `imx-nxp-ara2_2.1.1.bb` | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
+| NXP, backported into this layer | `recipes-nxp-backport/ara2/imx-nxp-ara2_2.1.1.bb` | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
 | Kinara SDK, this layer | `imx-nxp-ara2_1.2.1.bb` | 1.1.x | `/var/run/ara2.sock` | `ara2.service` |
 
 This layer packages the Kinara SDK under NXP's recipe name, with the
@@ -48,13 +50,24 @@ the LLM and VLM edge studios, `imx-smart-device-gateway`) are written
 against NXP's packaging and are not expected to work with the Kinara SDK
 one.
 
+### NXP's runtime on releases without it
+
+meta-imx-ml gained `imx-nxp-ara2` with the wrynose BSP. On kirkstone through whinlatter it ships no Ara-2 recipe at all, which leaves the Kinara SDK runtime — and its NDA mirror — as the only source. `recipes-nxp-backport` carries NXP's own recipes for those releases, so a build without mirror access still has a runtime. It needs only NXP's EULA:
+
+```
+ACCEPT_FSL_EULA = "1"
+PREFERRED_VERSION_imx-nxp-ara2 = "2.1.1"
+```
+
+The backport carries `DEFAULT_PREFERENCE = "-1"`, so it is never selected implicitly: where both are available the Kinara SDK packaging stays the default and the `PREFERRED_VERSION` above is what switches to NXP's. The directory is masked wherever meta-imx-ml provides the recipes itself, and wherever meta-imx-bsp is absent, since they inherit its `fsl-eula2` classes.
+
+These recipes come from [PHYTEC's fork of this layer](https://github.com/tloanPhytec/meta-kinara/tree/95-walnascar-ScrewLoose), which established the approach and the fixes NXP's published recipes need outside wrynose.
+
 ## Running the Kinara SDK runtime
 
-`ara2.service` is installed disabled. Enable it once on the target so the proxy starts at boot:
+`ara2.service` is installed but not enabled, and `99-ara2-kinara.rules` starts it when an Ara-2 appears on PCIe (vendor `0x1e58`) or USB (`318d`). A board with no accelerator fitted never starts the runtime, and one with an accelerator needs nothing done to it. This mirrors the activation NXP ships with its own packaging.
 
-```
-systemctl enable --now ara2
-```
+The unit also carries `ara2-present.sh` as its `ExecCondition`, so enabling it by hand on a board with no accelerator leaves it skipped rather than looping on `Restart=always`.
 
 Never run `ara2-info` or `chip_info` while the service is active; stop it first.
 
@@ -85,7 +98,7 @@ This layer depends on:
 - `poky` (meta) — OpenEmbedded core
 - NXP BSP kernel with Ara-2 device-tree support
 
-Compatible with Yocto release series: **kirkstone**, **walnascar**.
+Compatible with Yocto release series: **kirkstone**, **scarthgap**, **walnascar**, **whinlatter**, **wrynose**.
 
 ## Setup
 

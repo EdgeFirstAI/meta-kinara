@@ -1,0 +1,8 @@
+# Start the Ara-2 proxy when an accelerator appears, on PCIe or USB.
+#
+# ara2.service is installed but not enabled, so nothing starts the runtime on a
+# board with no accelerator fitted. These rules are the activation path, and
+# mirror the ones NXP ships with its own packaging of the runtime.
+
+ACTION=="add", SUBSYSTEM=="pci", ATTR{vendor}=="0x1e58", TAG+="systemd", ENV{SYSTEMD_WANTS}+="ara2.service"
+ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", ATTR{idVendor}=="318d", TAG+="systemd", ENV{SYSTEMD_WANTS}+="ara2.service"

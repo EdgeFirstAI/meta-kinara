@@ -4,6 +4,13 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 
 ## [Unreleased]
 
+- `recipes-nxp-backport` carries NXP's `imx-nxp-ara2` 2.1.1 and `eiq-aaf-connector` 2.1 for the releases whose meta-imx-ml ships no Ara-2 recipe, so a build without NDA mirror access has a runtime. Selected with `PREFERRED_VERSION_imx-nxp-ara2 = "2.1.1"` and never chosen implicitly (`DEFAULT_PREFERENCE = "-1"`); masked wherever meta-imx-ml provides the recipes, and wherever meta-imx-bsp is absent. Backported from PHYTEC's fork of this layer, along with its fixes to `S` and the configure, compile and wheel-install steps of NXP's `eiq-aaf-connector`.
+- `KINARA_ARA2_RUNTIME` keys on `PREFERRED_VERSION_imx-nxp-ara2` first, so a 2.x selection reports `nxp` on the releases where the backport supplies it rather than `kinara`.
+- NXP's `imx-nxp-ara2` gains `ara2` in `PROVIDES` and `RPROVIDES`, `${includedir}/sdk_ara` in its `-dev` package, and links for `libaraclient.so.1`, `dvapi.h` and `dv_status_codes.h`. Neither 2.1.1 nor 3.0 ships the versioned soname or the legacy header paths that nnstreamer and `edgefirst-ara2` resolve.
+- NXP's `imx-nxp-ara2` GStreamer plugin is packaged as `imx-nxp-ara2-gstreamer`, so the runtime no longer puts `gstreamer1.0` in the main package's `RDEPENDS` and images that reach the NPU through the client library alone do not pull the stack in.
+- `ara2.service` is activated by udev (`99-ara2-kinara.rules`, PCIe vendor `0x1e58` and USB vendor `318d`) rather than enabled by hand, matching the activation NXP ships with its own packaging: a board with no accelerator never starts the runtime, and one with an accelerator needs no configuration. The unit carries `ara2-present.sh` as its `ExecCondition`, so enabling it by hand without an accelerator leaves it skipped instead of looping on `Restart=always`.
+- `uiodma.sh` tolerates a missing `new_id`, so it does not fail on a board with no accelerator.
+
 - The Kinara SDK runtime recipe is renamed from `ara2` to `imx-nxp-ara2` at version 1.2.1, the Kinara SDK release, so it and NXP's `imx-nxp-ara2` (2.1.1, meta-imx-ml) are one recipe name and a build installs exactly one of them. Previously both were installed side by side, with different DVAPI generations on different proxy sockets.
 - NXP's `imx-nxp-ara2` takes precedence wherever meta-imx-ml ships it (wrynose onwards); the Kinara SDK recipe is used there only with `PREFERRED_VERSION_imx-nxp-ara2 = "1.2.1"`. Builds without meta-imx-ml, or with an earlier meta-imx-ml, use it with no configuration.
 - `imx-nxp-ara2` (Kinara SDK) replaces and conflicts with the old `ara2` and `ara2-python` packages so package-managed targets upgrade in place.
