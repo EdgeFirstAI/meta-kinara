@@ -38,6 +38,11 @@ RPROVIDES:${PN}-staticdev += "ara2-staticdev"
 FILES:${PN}-dev += "${includedir}/sdk_ara"
 
 do_install:append() {
+    # fsl-eula2-unpack2 installs the unpacked archive with cp -r ${S}/*, and the
+    # patch machinery leaves quilt's bookkeeping in ${S}, so the patch and its
+    # series file are copied into the rootfs unless they are removed here.
+    rm -rf ${D}${D_SUBDIR}/patches
+
     ln -sf libaraclient_aarch64.so ${D}${libdir}/libaraclient.so.1
     ln -sf sdk_ara/dvapi.h ${D}${includedir}/dvapi.h
     ln -sf sdk_ara/dv_status_codes.h ${D}${includedir}/dv_status_codes.h
