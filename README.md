@@ -69,7 +69,7 @@ These recipes come from [PHYTEC's fork of this layer](https://github.com/tloanPh
 
 The unit also carries `ara2-present.sh` as its `ExecCondition`, so enabling it by hand on a board with no accelerator leaves it skipped rather than looping on `Restart=always`.
 
-Never run `ara2-info` or `chip_info` while the service is active; stop it first.
+`ara2-info` reports the chip state on either runtime: the Kinara SDK packaging symlinks it to `chip_info`, NXP's to `chip_info.sh`, which enumerates the endpoints and loads `uiodma` before running the same binary. Stop the runtime before running it — `ara2.service` for the Kinara SDK, `rt-sdk-ara2.service` for NXP's — because the proxy holds the device open.
 
 ### Ara-2 card boot firmware
 

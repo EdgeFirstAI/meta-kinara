@@ -1,0 +1,36 @@
+From: Sébastien Taylor <sebastien@au-zone.com>
+Date: Tue, 27 Oct 2026 00:00:00 -0600
+Subject: [PATCH] launch_proxy: do not require sudo to clear the stale pidfile
+
+launch_proxy.sh runs under "set -e" and clears a stale proxy pidfile
+with "sudo rm -f" before starting proxy_ara240. rt-sdk-ara2_script.sh
+already refuses to run as anything but root, so the whole service runs
+as root and sudo adds nothing -- but on an image that does not ship
+sudo the command exits 127 and set -e terminates the script before the
+proxy is ever launched.
+
+Nothing reports the failure. rt-sdk-ara2_script.sh backgrounds this
+script without checking its exit status and then logs success
+unconditionally, so systemd records the unit as active (exited),
+status=0/SUCCESS, with no proxy running and no socket at the
+interface_socket_file path clients wait on.
+
+Drop sudo and clear the pidfile directly.
+
+Upstream-Status: Pending [reported to NXP]
+Signed-off-by: Sébastien Taylor <sebastien@au-zone.com>
+---
+ usr/share/rt-sdk-ara240_2.1.1/scripts/launch_proxy.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+--- a/usr/share/rt-sdk-ara240_2.1.1/scripts/launch_proxy.sh
++++ b/usr/share/rt-sdk-ara240_2.1.1/scripts/launch_proxy.sh
+@@ -48,7 +48,7 @@
+ 		log_message "Proxy is already running." "$PROXY_LOG_FILE"
+ 	else
+ 		log_message "Launching proxy..." "$PROXY_LOG_FILE"
+-		sudo rm -f /var/run/dvproxy.pid
++		rm -f /var/run/dvproxy.pid
+ 		cd "$PROXY_DIR" || {
+ 			log_message "Error: Failed to navigate to proxy directory: $PROXY_DIR" "$PROXY_LOG_FILE"
+ 			exit 1

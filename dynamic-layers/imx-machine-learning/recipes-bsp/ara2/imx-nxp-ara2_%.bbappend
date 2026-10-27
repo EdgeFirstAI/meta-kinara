@@ -12,13 +12,22 @@
 # NXP's 3.0 runtime replaced hw_bringup.sh with ara2-uiodma-bind.service, which
 # binds the device on every start, so the patch applies to 2.1.1 only.
 #
-# Local workaround pending upstream report to NXP.
+# launch_proxy.sh clears a stale proxy pidfile with "sudo rm -f" under set -e.
+# rt-sdk-ara2_script.sh already refuses to run as anything but root, so sudo is
+# redundant, but on an image that does not ship it the command exits 127 and
+# set -e ends the script before proxy_ara240 is started. The wrapper
+# backgrounds this script without checking its status and logs success
+# regardless, so systemd reports the unit active with no runtime behind it and
+# no socket for clients to connect to. The second patch drops the sudo.
+#
+# Local workarounds pending upstream report to NXP.
 
 FILESEXTRAPATHS:prepend := "${THISDIR}/files:"
 
 python () {
     if d.getVar("PV") == "2.1.1":
         d.appendVar("SRC_URI", " file://0001-hw_bringup-fix-uiodma-rebind-after-failed-attempt.patch")
+        d.appendVar("SRC_URI", " file://0002-launch_proxy-do-not-require-sudo.patch")
 }
 
 # NXP's packaging ships libaraclient as the unversioned libaraclient_aarch64.so
@@ -42,6 +51,12 @@ do_install:append() {
     # patch machinery leaves quilt's bookkeeping in ${S}, so the patch and its
     # series file are copied into the rootfs unless they are removed here.
     rm -rf ${D}${D_SUBDIR}/patches
+
+    # The Kinara SDK packaging provides ara2-info; NXP's does not, so without
+    # this the documented check differs per runtime. chip_info.sh is NXP's
+    # wrapper for interactive use: it enumerates the endpoints and loads
+    # uiodma, both of which the raw chip_info binary expects to be done first.
+    ln -sf chip_info.sh ${D}${bindir}/ara2-info
 
     ln -sf libaraclient_aarch64.so ${D}${libdir}/libaraclient.so.1
     ln -sf sdk_ara/dvapi.h ${D}${includedir}/dvapi.h
