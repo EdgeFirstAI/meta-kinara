@@ -4,7 +4,7 @@
 # package via kernel-module-split auto-discovery — a do_packagedata
 # shared-area collision when both are pulled into the same build
 # (kernel-module-uiodma via imx-nxp-ara2_1.2.1.bb, this one via
-# imx-nxp-ara2_2.1.1.bb's RDEPENDS on bare "uiodma").
+# NXP's imx-nxp-ara2 RDEPENDS on bare "uiodma").
 #
 # Skip this one in favor of our own, which now also RPROVIDES "uiodma"
 # so imx-nxp-ara2's dependency still resolves, and already carries

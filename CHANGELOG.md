@@ -12,7 +12,7 @@ All notable changes to the `meta-kinara` Yocto layer are documented here.
 - `edgefirst-ara2` moved to meta-edgefirst. `packagegroup-kinara` installs it only when meta-edgefirst is in the build.
 - `packagegroup-kinara` and `packagegroup-kinara-sdk` depend on `imx-nxp-ara2` and its `-dev`/`-staticdev` packages.
 - Appends to NXP recipes (`imx-nxp-ara2`, `uiodma`) live under `dynamic-layers/imx-machine-learning/`, wired through `BBFILES_DYNAMIC`. A `.bbappend` with no matching recipe is a parse error, so keeping them in `recipes-*` broke every build without meta-imx-ml. They are also masked on kirkstone through whinlatter, whose meta-imx-ml has neither recipe.
-- NXP's `rt-sdk-ara2` `hw_bringup.sh` is patched to check the actual PCI driver binding of the Ara-2 device before skipping the uiodma bind.
+- NXP's `rt-sdk-ara2` `hw_bringup.sh` is patched to check the actual PCI driver binding of the Ara-2 device before skipping the uiodma bind. The patch applies to `imx-nxp-ara2` 2.1.1 only: NXP's 3.0 runtime replaces the script with `ara2-uiodma-bind.service`, which binds the device on every start. The append is `imx-nxp-ara2_%.bbappend` and selects the patch by version.
 - `LAYERSERIES_COMPAT` extended with `wrynose` (Yocto 5.4) for the NXP imx-6.18.20-2.0.0 BSP. Kirkstone, scarthgap, walnascar, and whinlatter remain supported.
 - `LAYERSERIES_COMPAT` extended with `whinlatter` (Yocto 5.3) for the NXP imx-6.18.2-1.0.0 BSP. Kirkstone, scarthgap and walnascar remain supported.
 - Bumped `kernel-module-uiodma` from 1.2.1 to 1.2.2 — sysfs `bin_attribute` callbacks constified for Linux 6.13+ (kernel 6.18 in the whinlatter BSP), version-gated so 5.15/6.12 kernels still build.

@@ -17,7 +17,7 @@ Two packagings of the Ara-2 runtime exist, and only one can be installed:
 
 | Source | Recipe | DVAPI | Proxy socket | Service |
 |---|---|---|---|---|
-| NXP, meta-imx-ml | `imx-nxp-ara2_2.1.1.bb` | 1.3.x | `/var/run/proxy.sock` | `rt-sdk-ara2.service` |
+| NXP, meta-imx-ml | `imx-nxp-ara2_3.0.bb` (`imx-nxp-ara2_2.1.1.bb` on earlier BSPs) | 1.3.x on 2.1.1 | `/var/run/proxy.sock` | `ara2-proxy.service` (3.0), `rt-sdk-ara2.service` (2.1.1) |
 | Kinara SDK, this layer | `imx-nxp-ara2_1.2.1.bb` | 1.1.x | `/var/run/ara2.sock` | `ara2.service` |
 
 This layer packages the Kinara SDK under NXP's recipe name, with the
@@ -65,7 +65,7 @@ The Ara-2 card keeps its boot firmware in on-card flash, and each runtime accept
 | Runtime | Accepted firmware versions | Shipped image |
 |---|---|---|
 | Kinara SDK 1.2.1 (this layer) | 8719, 8720, 8723, 32778, 32779 | `/usr/share/ara2/willow_therm.hex` (32779) |
-| NXP rt-sdk-ara2 2.1.1 | 32779, 65794, 131072, 131073 | `Commercial_131072.hex`, via `program_flash.sh` |
+| NXP imx-nxp-ara2 2.1.1 and 3.0 | 32779, 65794, 131072, 131073 | `Commercial_131072.hex`; 2.1.1 programs it with `program_flash.sh` |
 
 A card that has been used with NXP's runtime may carry firmware 65794 or newer. The Kinara SDK proxy then fails with `Unsupported firmware version on device ... DV_ENDPOINT_FIRMWARE_BOOT_FAILURE`. To check and restore the firmware this layer ships:
 

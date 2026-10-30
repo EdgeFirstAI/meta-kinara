@@ -19,7 +19,7 @@ S = "${@(d.getVar('UNPACKDIR') + '/' + d.getVar('BB_GIT_DEFAULT_DESTSUFFIX')) if
 RPROVIDES:${PN} += "kernel-module-uiodma"
 
 # NXP's own meta-imx-ml uiodma_1.0.0.bb (new as of wrynose) RDEPENDS on
-# bare "uiodma" (imx-nxp-ara2_2.1.1.bb). We skip that recipe in favor of
+# bare "uiodma" (NXP's imx-nxp-ara2 recipe). We skip that recipe in favor of
 # this one (see uiodma_1.0.0.bbappend) to avoid a kernel-module-uiodma
 # do_packagedata collision, so provide the name it expects too.
 RPROVIDES:${PN} += "uiodma"
